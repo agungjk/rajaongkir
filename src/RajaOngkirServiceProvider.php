@@ -15,7 +15,7 @@ class RajaOngkirServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-                __DIR__.'/config/rajaongkir.php' => config_path().'/rajaongkir.php',
+                __DIR__.'/config/rajaongkir.php' => config_path('config/rajaongkir.php'),
             ]);
     }
 
@@ -26,7 +26,11 @@ class RajaOngkirServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('rajaOngkir', function()
+        $this->app->singleton('rajaongkir', function() {
+            return true;
+        });
+
+        App::bind('rajaongkir', function()
         {
             return new RajaOngkir;
         });

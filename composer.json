@@ -12,12 +12,22 @@
             "email": "agungjk.social@gmail.com"
         }
     ],
-    "autoload": {
-    	"psr-4": {
-    		"agungjk\\rajaongkir\\": "src/"
-    	}
-    },
     "require": {
     	"illuminate/support": "~5"
+    },
+    "autoload": {
+    	"psr-4": {
+    		"Agungjk\\Rajaongkir\\": "src/"
+    	}
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Agungjk\\Rajaongkir\\RajaOngkirServiceProvider"
+            ],
+            "aliases": {
+                "RajaOngkir": "Agungjk\\Rajaongkir\\RajaOngkirFacade"
+            }
+        }
     }
 }
