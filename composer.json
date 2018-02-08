@@ -1,0 +1,33 @@
+{
+    "name": "agungjk/rajaongkir",
+    "description": "Raja Ongkir API Wrapper for Laravel 5",
+    "keywords": [
+        "rajaongkir", "application programming interface", "laravel", "wrapper"
+    ],
+    "license": "MIT",
+    "type": "package",
+    "authors": [
+        {
+            "name": "Agung Jati Kusumo",
+            "email": "agungjk.social@gmail.com"
+        }
+    ],
+    "require": {
+    	"illuminate/support": "~5"
+    },
+    "autoload": {
+    	"psr-4": {
+    		"Agungjk\\Rajaongkir\\": "src/"
+    	}
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Agungjk\\Rajaongkir\\RajaOngkirServiceProvider"
+            ],
+            "aliases": {
+                "RajaOngkir": "Agungjk\\Rajaongkir\\RajaOngkirFacade"
+            }
+        }
+    }
+}
