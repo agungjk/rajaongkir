@@ -2,7 +2,7 @@
 
 namespace Agungjk\Rajaongkir;
 
-use Illuminate\Support\Facades\App;
+use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 
 class RajaOngkirServiceProvider extends ServiceProvider
@@ -10,29 +10,29 @@ class RajaOngkirServiceProvider extends ServiceProvider
     /**
      * Bootstrap the application services.
      *
-     * @return void
      */
     public function boot()
     {
         $this->publishes([
-                __DIR__.'/config/rajaongkir.php' => config_path('config/rajaongkir.php'),
+                __DIR__.'/config/rajaongkir.php' => config_path('rajaongkir.php'),
             ]);
     }
 
     /**
      * Register the application services.
      *
-     * @return void
      */
     public function register()
     {
-        $this->app->singleton('rajaongkir', function() {
-            return true;
-        });
+        $this->app->singleton('rajaongkir', function () {
+            $guzzle = new Client([
+                'base_uri' => rtrim(config('rajaongkir.end_point_api'), '/').'/',
+                'headers' => [
+                    'key' => config('rajaongkir.api_key'),
+                ],
+            ]);
 
-        App::bind('rajaongkir', function()
-        {
-            return new RajaOngkir;
+            return new RajaOngkir($guzzle);
         });
     }
 }

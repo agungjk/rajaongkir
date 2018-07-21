@@ -2,111 +2,120 @@
 
 namespace Agungjk\Rajaongkir;
 
-class RajaOngkir {
-	protected $endpoint;
-	protected $key;
-	private $error;
+use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
 
-	public function __construct(){
-		$this->endpoint = config('rajaongkir.end_point_api', 'http://rajaongkir.com/api/starter');
-		$this->key = config('rajaongkir.api_key');
-		$this->city = json_decode(file_get_contents(__DIR__ . '/config/city.json'));
-		$this->province = json_decode(file_get_contents(__DIR__ . '/config/province.json'));
-	}	
+class RajaOngkir
+{
+    protected $guzzle;
+    protected $endpoint;
+    protected $key;
+    private $error;
 
-	private function _request($path, $options = null)
-	{
-		$url = $this->endpoint . "/" . $path;
+    public function __construct(Client $guzzle)
+    {
+        $this->guzzle = $guzzle;
 
-		$curl = curl_init();
-		$config = array(
-			CURLOPT_URL => $url,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => "",
-			CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 30,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			CURLOPT_CUSTOMREQUEST => "GET",
-			CURLOPT_HTTPHEADER => array(
-		    	"key: " . $this->key
-			),
-		);
-		$config = array_merge($config, $options);
-		curl_setopt_array($curl, $config);
+        $this->city = json_decode(file_get_contents(__DIR__.'/config/city.json'));
+        $this->province = json_decode(file_get_contents(__DIR__.'/config/province.json'));
+    }
 
-		$response = curl_exec($curl);
-		$err = curl_error($curl);
-		curl_close($curl);
+    public function province($id = null)
+    {
+        $uri = '/province';
 
-		if ($err) {
-			throw new Exception($err, 1);
-		}
+        if (empty($id)) {
+            return empty($this->province) ? $this->get($uri)->results : $this->province;
+        }
 
-		if (! isset($response->rajaongkir)) {
-			$this->error = 'Response not valid';
-			return false;
-		}
+        if (empty($this->province)) {
+            $uri .= '?'.http_build_query(compact('id'));
 
-		$rajaongkir = $response->rajaongkir;
+            return $this->get($uri)->results;
+        }
 
-		if ( $rajaongkir->status->code == 400 ) {
-			$this->error = $rajaongkir->status->description;
-		}
+        foreach ($this->province as $key => $value) {
+            if ($value->province_id == $id) {
+                return $value;
+            }
+        }
 
-		if ( $rajaongkir->status->code == 200 ) {
-			return $rajaongkir->results;
-		}
-	}
+        return null;
+    }
 
-	public function province($id = null)
-	{
-		if ($id = null) {
-			return empty($this->province) ? self::_request('/province') : $this->province;
-		}
+    public function city($id = null)
+    {
+        $uri = '/city';
 
-		if (empty($this->province)) {
-			return self::_request('/province?id=' . $id);
-		}
+        if (empty($id)) {
+            return empty($this->city) ? $this->get($uri)->results : $this->city;
+        }
 
-		foreach ($this->province as $key => $value) {
-			if ($value->province_id == $id) {
-				return $value;
-			}
-		}
+        if (empty($this->city)) {
+            $uri .= '?'.http_build_query(compact('id'));
 
-		return null;
-	}
+            return $this->get($uri)->results;
+        }
 
-	public function city($id = null)
-	{
-		if ($id == null) {
-			return empty($this->city) ? self::_request('/city') : $this->city;
-		}
+        foreach ($this->city as $key => $value) {
+            if ($value->city_id == $id) {
+                return $value;
+            }
+        }
 
-		if (empty($this->city)) {
-			return self::_request('/city?id=' . $id);
-		}
+        return null;
+    }
 
-		foreach ($this->city as $key => $value) {
-			if ($value->city_id == $id) {
-				return $value;
-			}
-		}
-		
-		return null;
-	}
+    public function cost($origin, $destination, $weight, $courier)
+    {
+        $uri = '/cost';
 
-	public function cost($origin, $destination, $weight, $courier)
-	{
-		$options = [
-			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_POSTFIELDS => "origin=". $origin ."&destination=". $destination ."&weight=". $weight ."&courier=". $courier,
-			CURLOPT_HTTPHEADER => array(
-				"content-type: application/x-www-form-urlencoded",
-		    	"key: " . self::key
-			),
-		];
-		return self::_request('/cost', $options);
-	}
+        $response = $this->post($uri, compact('origin', 'destination', 'weight', 'courier'));
 
+        return [
+            'origin' => $response->origin_details,
+            'destination' => $response->destination_details,
+            'results' => $response->results,
+        ];
+    }
+
+    protected function parseResponse(Response $response)
+    {
+        $body = $response->getBody()->getContents();
+
+        $data = json_decode($body);
+
+        if (empty($data->rajaongkir) || empty($data->rajaongkir->status)) {
+            throw new Exception('Empty response');
+        }
+
+        $data = $data->rajaongkir;
+
+        if ($data->status->code != 200) {
+            throw new Exception($data->status->description);
+        }
+
+        return $data;
+    }
+
+    protected function get($path, $options = [])
+    {
+        $uri = trim($path, '/').'?'.http_build_query($options);
+
+        $response = $this->guzzle->get($uri);
+
+        return $this->parseResponse($response);
+    }
+
+    protected function post($path, $options = [])
+    {
+        $uri = trim($path, '/');
+
+        $response = $this->guzzle->post($uri, [
+            'form_params' => $options,
+        ]);
+
+        return $this->parseResponse($response);
+    }
 }
