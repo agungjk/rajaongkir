@@ -2,7 +2,7 @@
 
 return [
 
-	/*
+    /*
     |--------------------------------------------------------------------------
     | End Point Api ( Konfigurasi Server Akun )
     |--------------------------------------------------------------------------
@@ -13,9 +13,9 @@ return [
     |
     */
 
-	'end_point_api' => env('RAJAONGKIR_ENDPOINT', 'http://rajaongkir.com/api/starter'),
+    'end_point_api' => env('RAJAONGKIR_ENDPOINT', 'https://api.rajaongkir.com/starter'),
 
-	/*
+    /*
     |--------------------------------------------------------------------------
     | Api key
     |--------------------------------------------------------------------------
@@ -24,5 +24,5 @@ return [
     |
     */
 
-	'api_key' => env('RAJAONGKIR_KEY', 'SomeRandomString'),
+    'api_key' => env('RAJAONGKIR_KEY', 'SomeRandomString'),
 ];
