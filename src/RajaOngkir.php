@@ -60,7 +60,7 @@ class RajaOngkir {
 
 	public function province($id = null)
 	{
-		if ($id = null) {
+		if ($id == null) {
 			return empty($this->province) ? self::_request('/province') : $this->province;
 		}
 
